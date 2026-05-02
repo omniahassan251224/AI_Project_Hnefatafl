@@ -1,0 +1,60 @@
+def inside_board(r, c):
+    return 0 <= r < SIZE and 0 <= c < SIZE
+
+def valid_move(board, r, c):
+    directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+    validmoves = []
+    cell = board[r][c]
+    
+    if cell == E:
+        return validmoves
+    
+    for rd, cd in directions:
+        nextrow = r + rd
+        nextcol = c + cd
+        
+        while inside_board(nextrow, nextcol) and board[nextrow][nextcol] == E:
+            target = (nextrow, nextcol)
+            
+            if target == throne or target in corners:
+                if cell == K:
+                    validmoves.append(target)
+            else:
+                validmoves.append(target)
+            
+            nextrow += rd
+            nextcol += cd
+            
+    return validmoves
+
+def captured(board, r, c, cell):
+    opponent = A if cell in [D, K] else D
+    directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+    
+    for rd, cd in directions:
+        victim_r, victim_c = r + rd, c + cd
+        anchor_r, anchor_c = r + 2 * rd, c + 2 * cd
+        
+        if inside_board(anchor_r, anchor_c):
+            victim_cell = board[victim_r][victim_c]
+            anchor_cell = board[anchor_r][anchor_c]
+            
+            if victim_cell == opponent and victim_cell != K:
+                is_trapped = (anchor_cell == cell) or \
+                             (anchor_cell == K if cell == D else False) or \
+                             ((anchor_r, anchor_c) in corners) or \
+                             ((anchor_r, anchor_c) == throne and anchor_cell == E)
+                
+                if is_trapped:
+                    board[victim_r][victim_c] = E
+
+def make_move(board, start, end):
+    r1, c1 = start
+    r2, c2 = end
+    cell = board[r1][c1]
+    
+    board[r2][c2] = cell
+    board[r1][c1] = E
+    
+    captured(board, r2, c2, cell)
+    return board
