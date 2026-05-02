@@ -5,6 +5,7 @@ A = 'A'
 D = 'D'
 K  = 'K'
 SIZE = 11
+DIRECTIONS = [(1,0),(-1,0),(0,1),(0,-1)]
 mid = int(SIZE/2)
 throne = (mid, mid)
 corners = [(0,0), (0,10), (10,0), (10,10)]
