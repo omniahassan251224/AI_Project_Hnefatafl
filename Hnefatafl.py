@@ -48,9 +48,28 @@ def print_board(board):
         print(' '.join(row))
     
 
+def utility_function(self):
+        score = 0
+        king_pos = None
+
+        for r in range(SIZE):
+            for c in range(SIZE):
+                if self.board[r][c] == K:
+                    king_pos = (r,c)
+                elif self.board[r][c] == D:
+                    score += 2
+                elif self.board[r][c] == A:
+                    score -= 2
+
+        if king_pos:
+            kr,kc = king_pos
+            dist = min([abs(kr-x)+abs(kc-y) for x,y in corners])
+            score += (SIZE - dist)
+
+        return score
+
 
 board = create_board()
 print_board(board)
 print("Throne:", throne)
 print("Corners:", corners)
-
