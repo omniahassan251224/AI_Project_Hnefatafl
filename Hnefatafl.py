@@ -60,13 +60,20 @@ def utility_function(self):
                     score += 2
                 elif self.board[r][c] == A:
                     score -= 2
-
-        if king_pos:
+       score += defenders * 2
+       score -= attackers * 2
+       if king_pos:
             kr,kc = king_pos
             dist = min([abs(kr-x)+abs(kc-y) for x,y in corners])
             score += (SIZE - dist)
+            danger = 0
+            for dr,dc in DIRECTIONS:
+                nr, nc = kr+dr, kc+dc
+                if self.inside(nr,nc) and self.board[nr][nc] == A:
+                    danger += 1
 
-        return score
+           score -= danger * 3
+      return score
 
 
 board = create_board()
