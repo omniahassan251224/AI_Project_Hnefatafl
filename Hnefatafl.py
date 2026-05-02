@@ -49,18 +49,19 @@ def print_board(board):
         print(' '.join(row))
     
 
-def utility_function(self):
+def utility_function(board):
         score = 0
         king_pos = None
-
+        attackers = 0
+        defenders = 0
         for r in range(SIZE):
             for c in range(SIZE):
-                if self.board[r][c] == K:
+                if board[r][c] == K:
                     king_pos = (r,c)
-                elif self.board[r][c] == D:
-                    defenders += 2
-                elif self.board[r][c] == A:
-                    attackers += 2
+                elif board[r][c] == D:
+                    defenders += 1
+                elif board[r][c] == A:
+                    attackers += 1
         score += defenders * 2
         score -= attackers * 2
         if king_pos:
@@ -70,7 +71,7 @@ def utility_function(self):
             danger = 0
             for dr,dc in DIRECTIONS:
                 nr, nc = kr+dr, kc+dc
-                if self.inside(nr,nc) and self.board[nr][nc] == A:
+                if 0 <= nr < SIZE and 0 <= nc < SIZE and board[nr][nc] == A:
                     danger += 1
 
             score -= danger * 3
