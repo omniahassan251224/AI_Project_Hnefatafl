@@ -1,0 +1,101 @@
+def get_game_settings():
+    print("Welcome to Hnefatafl!")
+    human_team = ""
+    while human_team not in ['A', 'D']:
+        human_team = input("Choose Team: Attackers (A) or Defenders (D): ").upper()
+    difficulty = ""
+    while difficulty not in ['E', 'M', 'H']:
+        difficulty = input("Choose Difficulty: Easy (E), Medium (M), Hard (H): ").upper()
+
+    depth_map = {'E': 1, 'M': 3, 'H': 5}
+    depth = depth_map.get(difficulty, 1)
+    ai_team = 'D' if human_team == 'A' else 'A'
+
+    return human_team, ai_team, depth
+
+def check_win_conditions(board):
+    king_r, king_c = None, None
+    for r in range(SIZE):
+        for c in range(SIZE):
+            if board[r][c] == K:
+                king_r, king_c = r, c
+                break
+        if king_r is not None:
+            break
+
+    if king_r is None:
+        return False
+
+    if (king_r, king_c) in corners:
+        return 'D'
+
+    blocked_sides = 0
+    if king_r - 1 < 0 or board[king_r - 1][king_c] == A: blocked_sides += 1
+    if king_r + 1 >= SIZE or board[king_r + 1][king_c] == A: blocked_sides += 1
+    if king_c - 1 < 0 or board[king_r][king_c - 1] == A: blocked_sides += 1
+    if king_c + 1 >= SIZE or board[king_r][king_c + 1] == A: blocked_sides += 1
+
+    if blocked_sides == 4:
+        return 'A'
+
+    return False
+
+def get_AI_turn(board, depth, team):
+    print(f"AI ({team}) is thinking...")
+    print("AI Not Good ")
+
+def get_human_turn(board, team):
+    is_valid_move = False
+    while not is_valid_move:
+        try:
+            start_cell = input(f"[{team}] Select piece:row,col")
+            end_cell = input(f"[{team}] Select destination:row,col")
+            start_r, start_c = map(int, start_cell.split(','))
+            end_r, end_c = map(int, end_cell.split(','))
+
+            if not inside_board(start_r, start_c) or not inside_board(end_r, end_c):
+                print("ERROR: Cell out of board.")
+                continue
+
+            piece = board[start_r][start_c]
+            if (team == A and piece != A) or (team == D and piece not in [D, K]):
+                print("ERROR: select your own piece!")
+                continue
+
+            possible_moves = valid_move(board, start_r, start_c)
+            if (end_r, end_c) in possible_moves:
+                make_move(board, (start_r, start_c), (end_r, end_c))
+                is_valid_move = True
+            else:
+                print("ERROR: Invalid move.")
+                continue
+        except ValueError:
+            print("ERROR: Invalid format use numbers separated by a comma.")
+
+def play_game():
+    board = create_board()
+    human_T, ai_T, ai_depth = get_game_settings()
+
+    current_turn = 'A'
+    game_running = True
+
+    while game_running:
+        print_board(board)
+        print(f"--- Turn: {'Attackers' if current_turn == 'A' else 'Defenders'} ---")
+
+        if current_turn == human_T:
+            get_human_turn(board, human_T)
+        else:
+            get_AI_turn(board,ai_depth,ai_T)
+            pass
+
+        winner = check_win_conditions(board)
+        if winner:
+            print_board(board)
+            print(f"\nVictory for the {'Attackers' if winner == 'A' else 'Defenders'}!")
+            game_running = False
+        else:
+            current_turn = 'D' if current_turn == 'A' else 'A'
+
+if __name__ == "__main__":
+    play_game()
