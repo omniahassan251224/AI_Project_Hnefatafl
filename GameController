@@ -1,4 +1,4 @@
-def get_game_settings():
+def game_settings():
     print("Welcome to Hnefatafl!")
     human_team = ""
     while human_team not in ['A', 'D']:
@@ -40,10 +40,10 @@ def check_win(board):
 
     return False
 
-def get_AI_turn(board, depth, team):
+def AI_turn(board, depth, team):
     print("AI Not Good ")
 
-def get_human_turn(board, team):
+def human_turn(board, team):
     is_valid_move = False
     while not is_valid_move:
         try:
@@ -73,7 +73,7 @@ def get_human_turn(board, team):
 
 def play_game():
     board = create_board()
-    human_T, ai_T, ai_depth = get_game_settings()
+    human_T, ai_T, ai_depth = game_settings()
 
     current_turn = 'A'
     game_running = True
@@ -83,9 +83,9 @@ def play_game():
         print(f"--- Turn: {'Attackers' if current_turn == 'A' else 'Defenders'} ---")
 
         if current_turn == human_T:
-            get_human_turn(board, human_T)
+            human_turn(board, human_T)
         else:
-            get_AI_turn(board,ai_depth,ai_T)
+            AI_turn(board,ai_depth,ai_T)
             pass
 
         winner = check_win(board)
