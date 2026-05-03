@@ -13,7 +13,7 @@ def get_game_settings():
 
     return human_team, ai_team, depth
 
-def check_win_conditions(board):
+def check_win(board):
     king_r, king_c = None, None
     for r in range(SIZE):
         for c in range(SIZE):
@@ -41,7 +41,6 @@ def check_win_conditions(board):
     return False
 
 def get_AI_turn(board, depth, team):
-    print(f"AI ({team}) is thinking...")
     print("AI Not Good ")
 
 def get_human_turn(board, team):
@@ -89,7 +88,7 @@ def play_game():
             get_AI_turn(board,ai_depth,ai_T)
             pass
 
-        winner = check_win_conditions(board)
+        winner = check_win(board)
         if winner:
             print_board(board)
             print(f"\nVictory for the {'Attackers' if winner == 'A' else 'Defenders'}!")
