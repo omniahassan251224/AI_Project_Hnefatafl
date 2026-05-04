@@ -1,9 +1,11 @@
 import tkinter as tk
 from PIL import Image, ImageTk
 
+import os
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 SIZE = 11
 CELL_SIZE = 50
-
 
 E = '.'
 A = 'A'
@@ -13,8 +15,13 @@ DIRECTIONS = [(1,0),(-1,0),(0,1),(0,-1)]
 mid = int(SIZE/2)
 throne = (mid, mid)
 corners = [(0,0), (0,10), (10,0), (10,10)]
+
+selected = None
+valid_moves = []
+drag_piece = None
+
 root = tk.Tk()
-root.title("Viking Chess - Tafl")  
+root.title("Viking Chess - Tafl")
 canvas = tk.Canvas(root, width=SIZE*CELL_SIZE, height=SIZE*CELL_SIZE)
 canvas.pack()
 
@@ -29,6 +36,8 @@ defender_img = ImageTk.PhotoImage(defender_img)
 king_img = Image.open("king.png")
 king_img = king_img.resize((40, 40))
 king_img = ImageTk.PhotoImage(king_img)
+
+
 def create_board():
     board = [[E for _ in range(SIZE)] for _ in range(SIZE)]
 
@@ -58,66 +67,73 @@ def create_board():
         board[x][y] = A
 
     return board
+
+
 def inside_board(r, c):
     return 0 <= r < SIZE and 0 <= c < SIZE
+
 
 def valid_move(board, r, c):
     directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
     validmoves = []
     cell = board[r][c]
-    
+
     if cell == E:
         return validmoves
-    
+
     for rd, cd in directions:
         nextrow = r + rd
         nextcol = c + cd
-        
+
         while inside_board(nextrow, nextcol) and board[nextrow][nextcol] == E:
             target = (nextrow, nextcol)
-            
+
             if target == throne or target in corners:
                 if cell == K:
                     validmoves.append(target)
             else:
                 validmoves.append(target)
-            
+
             nextrow += rd
             nextcol += cd
-            
+
     return validmoves
+
 
 def captured(board, r, c, cell):
     opponent = A if cell in [D, K] else D
     directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-    
+
     for rd, cd in directions:
         victim_r, victim_c = r + rd, c + cd
         anchor_r, anchor_c = r + 2 * rd, c + 2 * cd
-        
+
         if inside_board(anchor_r, anchor_c):
             victim_cell = board[victim_r][victim_c]
             anchor_cell = board[anchor_r][anchor_c]
-            
+
             if victim_cell == opponent and victim_cell != K:
                 is_trapped = (anchor_cell == cell) or \
                              (anchor_cell == K if cell == D else False) or \
                              ((anchor_r, anchor_c) in corners) or \
                              ((anchor_r, anchor_c) == throne and anchor_cell == E)
-                
+
                 if is_trapped:
                     board[victim_r][victim_c] = E
+
 
 def make_move(board, start, end):
     r1, c1 = start
     r2, c2 = end
     cell = board[r1][c1]
-    
+
     board[r2][c2] = cell
     board[r1][c1] = E
-    
+
     captured(board, r2, c2, cell)
     return board
+
+
 def utility_function(board):
     score = 0
     king_pos = None
@@ -127,7 +143,7 @@ def utility_function(board):
     for r in range(SIZE):
         for c in range(SIZE):
             if board[r][c] == K:
-                king_pos = (r,c)
+                king_pos = (r, c)
             elif board[r][c] == D:
                 defenders += 1
             elif board[r][c] == A:
@@ -137,12 +153,12 @@ def utility_function(board):
     score -= attackers * 2
 
     if king_pos:
-        kr,kc = king_pos
-        dist = min([abs(kr-x)+abs(kc-y) for x,y in corners])
+        kr, kc = king_pos
+        dist = min([abs(kr-x)+abs(kc-y) for x, y in corners])
         score += (SIZE - dist)
 
         danger = 0
-        for dr,dc in DIRECTIONS:
+        for dr, dc in DIRECTIONS:
             nr, nc = kr+dr, kc+dc
             if 0 <= nr < SIZE and 0 <= nc < SIZE and board[nr][nc] == A:
                 danger += 1
@@ -150,16 +166,129 @@ def utility_function(board):
         score -= danger * 3
 
     return score
+
+def game_settings():
+    print("Welcome to Hnefatafl!")
+    human_team = ""
+    while human_team not in ['A', 'D']:
+        human_team = input("Choose Team: Attackers (A) or Defenders (D): ").upper()
+    difficulty = ""
+    while difficulty not in ['E', 'M', 'H']:
+        difficulty = input("Choose Difficulty: Easy (E), Medium (M), Hard (H): ").upper()
+
+    depth_map = {'E': 1, 'M': 3, 'H': 5}
+    depth = depth_map.get(difficulty, 1)
+    ai_team = 'D' if human_team == 'A' else 'A'
+
+    return human_team, ai_team, depth
+
+def check_win(board):
+    king_r, king_c = None, None
+    for r in range(SIZE):
+        for c in range(SIZE):
+            if board[r][c] == K:
+                king_r, king_c = r, c
+                break
+        if king_r is not None:
+            break
+
+    if king_r is None:
+        return False
+
+    if (king_r, king_c) in corners:
+        return 'D'
+
+    blocked_sides = 0
+    if king_r - 1 < 0 or board[king_r - 1][king_c] == A: blocked_sides += 1
+    if king_r + 1 >= SIZE or board[king_r + 1][king_c] == A: blocked_sides += 1
+    if king_c - 1 < 0 or board[king_r][king_c - 1] == A: blocked_sides += 1
+    if king_c + 1 >= SIZE or board[king_r][king_c + 1] == A: blocked_sides += 1
+
+    if blocked_sides == 4:
+        return 'A'
+
+    return False
+
+def AI_turn(board, depth, team):
+    print("AI Not Good ")
+
+def human_turn(board, team):
+    is_valid_move = False
+    while not is_valid_move:
+        try:
+            start_cell = input(f"[{team}] Select piece:row,col")
+            end_cell = input(f"[{team}] Select destination:row,col")
+            start_r, start_c = map(int, start_cell.split(','))
+            end_r, end_c = map(int, end_cell.split(','))
+
+            if not inside_board(start_r, start_c) or not inside_board(end_r, end_c):
+                print("ERROR: Cell out of board.")
+                continue
+
+            piece = board[start_r][start_c]
+            if (team == A and piece != A) or (team == D and piece not in [D, K]):
+                print("ERROR: select your own piece!")
+                continue
+
+            possible_moves = valid_move(board, start_r, start_c)
+            if (end_r, end_c) in possible_moves:
+                make_move(board, (start_r, start_c), (end_r, end_c))
+                is_valid_move = True
+            else:
+                print("ERROR: Invalid move.")
+                continue
+        except ValueError:
+            print("ERROR: Invalid format use numbers separated by a comma.")
+
+def play_game():
+    board = create_board()
+    human_T, ai_T, ai_depth = game_settings()
+
+    current_turn = 'A'
+    game_running = True
+
+    while game_running:
+        print_board(board)
+        print(f"--- Turn: {'Attackers' if current_turn == 'A' else 'Defenders'} ---")
+
+        if current_turn == human_T:
+            human_turn(board, human_T)
+        else:
+            AI_turn(board,ai_depth,ai_T)
+            pass
+
+        winner = check_win(board)
+        if winner:
+            print_board(board)
+            print(f"\nVictory for the {'Attackers' if winner == 'A' else 'Defenders'}!")
+            game_running = False
+        else:
+            current_turn = 'D' if current_turn == 'A' else 'A'
+
+
+def draw_pieces():
+    for row in range(SIZE):
+        for col in range(SIZE):
+            if selected and (row, col) == selected and drag_piece is not None:
+                continue
+            piece = board[row][col]
+            x_center = col * CELL_SIZE + CELL_SIZE // 2
+            y_center = row * CELL_SIZE + CELL_SIZE // 2
+            if piece == A:
+                canvas.create_image(x_center, y_center, image=attacker_img)
+            elif piece == D:
+                canvas.create_image(x_center, y_center, image=defender_img)
+            elif piece == K:
+                canvas.create_image(x_center, y_center, image=king_img)
+
+
 def draw_board(board):
     canvas.delete("all")
 
     for r in range(SIZE):
         for c in range(SIZE):
-
             x1 = c * CELL_SIZE
             y1 = r * CELL_SIZE
-            x_center = x1 + CELL_SIZE//2
-            y_center = y1 + CELL_SIZE//2
 
             if (r, c) in corners:
                 fill_color = "#000000"
@@ -174,18 +303,80 @@ def draw_board(board):
                 outline="#b8860b"
             )
 
-            piece = board[r][c]
+    draw_pieces()
 
-            if piece == A:
-                canvas.create_image(x_center, y_center, image=attacker_img)
-            elif piece == D:
-                canvas.create_image(x_center, y_center, image=defender_img)
-            elif piece == K:
-                canvas.create_image(x_center, y_center, image=king_img)
+
+def highlight_moves(moves, sel):
+    r, c = sel
+    canvas.create_rectangle(
+        c * CELL_SIZE, r * CELL_SIZE,
+        c * CELL_SIZE + CELL_SIZE, r * CELL_SIZE + CELL_SIZE,
+        fill="#ffff00", outline="#b8860b"
+    )
+
+    for r, c in moves:
+        canvas.create_rectangle(
+            c * CELL_SIZE, r * CELL_SIZE,
+            c * CELL_SIZE + CELL_SIZE, r * CELL_SIZE + CELL_SIZE,
+            fill="#90EE90", outline="#b8860b"
+        )
+
+    draw_pieces()
+
+
+def on_press(event):
+    global selected, valid_moves, drag_piece
+    col = event.x // CELL_SIZE
+    row = event.y // CELL_SIZE
+    if not inside_board(row, col):
+        return
+    if board[row][col] != E:
+        selected = (row, col)
+        drag_piece = board[row][col]
+        valid_moves = valid_move(board, row, col)
+        draw_board(board)
+        highlight_moves(valid_moves, selected)
+
+
+def on_drag(event):
+    if selected is None:
+        return
+    draw_board(board)
+    highlight_moves(valid_moves, selected)
+    if drag_piece == A:
+        img = attacker_img
+    elif drag_piece == D:
+        img = defender_img
+    elif drag_piece == K:
+        img = king_img
+    else:
+        return
+    canvas.create_image(event.x, event.y, image=img)
+
+
+def on_release(event):
+    global selected, valid_moves, drag_piece
+    if selected is None:
+        return
+    col = event.x // CELL_SIZE
+    row = event.y // CELL_SIZE
+    if inside_board(row, col) and (row, col) in valid_moves:
+        make_move(board, selected, (row, col))
+    selected = None
+    valid_moves = []
+    drag_piece = None
+    draw_board(board)
+
+
 def main():
     global board
     board = create_board()
     draw_board(board)
+    canvas.bind("<ButtonPress-1>", on_press)
+    canvas.bind("<B1-Motion>", on_drag)
+    canvas.bind("<ButtonRelease-1>", on_release)
     root.mainloop()
+
+
 if __name__ == "__main__":
     main()
