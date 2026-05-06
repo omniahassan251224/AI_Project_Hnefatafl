@@ -424,8 +424,6 @@ def on_press(event):
 
     piece = board[row][col]
 
-    # السطر السحري اللي كان ناقص:
-    # بنشيك لو المربع مش فاضي وهل القطعة دي فعلاً تبع فريق الإنسان (human_team)
     if piece != E and is_my_piece(piece, human_team):
         selected = (row, col)
         drag_piece = piece
@@ -433,7 +431,6 @@ def on_press(event):
         draw_board(board)
         highlight_moves(valid_moves, selected)
     else:
-        # لو حاول يحرك قطعة مش بتاعته، بنصفر الاختيار
         selected = None
         drag_piece = None
 
